@@ -2,6 +2,7 @@ package multierranalysis
 
 import (
 	"go/ast"
+	"strconv"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -22,15 +23,25 @@ var Analyzer = &analysis.Analyzer{
 
 func run(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	var rerr error
+	//var mp map[string]string
 
-	nodeFilter := []ast.Node{
-		(*ast.Ident)(nil),
-	}
-
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	inspect.Preorder(nil, func(n ast.Node) {
+		if rerr != nil {
+			return
+		}
 		switch n := n.(type) {
 		case *ast.ImportSpec:
-			if n.Path.Value == `"go.uber.org/multierr"` {
+			value, err := strconv.Unquote(n.Path.Value)
+			if err != nil {
+				rerr = err
+				return
+			}
+
+			if value == "go.uber.org/multierr" {
+				if n.Name != nil {
+					//importName = n.Name.Name
+				}
 				pass.Reportf(n.Pos(), "multierr is imported")
 			}
 		case *ast.Ident:
@@ -38,10 +49,10 @@ func run(pass *analysis.Pass) (any, error) {
 				pass.Reportf(n.Pos(), "Errors is here")
 			}
 		case *ast.CallExpr:
-			// TODO: check 
+			// TODO: check
 			pass.Reportf(n.Pos(), "CallExpr is here")
 		}
 	})
 
-	return nil, nil
+	return nil, rerr
 }
