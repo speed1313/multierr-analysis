@@ -28,13 +28,9 @@ func run(pass *analysis.Pass) (any, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	var rerr error
 	types := pass.TypesInfo
 
 	inspect.Preorder(nil, func(n ast.Node) {
-		if rerr != nil {
-			return
-		}
 		switch n := n.(type) {
 		case *ast.CallExpr:
 			value, ok := n.Fun.(*ast.SelectorExpr)
@@ -47,5 +43,5 @@ func run(pass *analysis.Pass) (any, error) {
 		}
 	})
 
-	return nil, rerr
+	return nil, nil
 }
