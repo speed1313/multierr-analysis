@@ -2,8 +2,8 @@ package multierranalysis
 
 import (
 	"go/ast"
-	//"strconv"
 
+	"github.com/gostaticanalysis/analysisutil"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -23,40 +23,28 @@ var Analyzer = &analysis.Analyzer{
 
 func run(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	pkgs := pass.Pkg.Imports()
+	obj := analysisutil.LookupFromImports(pkgs, "go.uber.org/multierr", "Errors")
+	if obj == nil {
+		return nil, nil
+	}
 	var rerr error
-	//var mp map[string]string
+	types := pass.TypesInfo
 
 	inspect.Preorder(nil, func(n ast.Node) {
 		if rerr != nil {
 			return
 		}
 		switch n := n.(type) {
-		// case *ast.ImportSpec:
-		// 	value, err := strconv.Unquote(n.Path.Value)
-		// 	if err != nil {
-		// 		rerr = err
-		// 		return
-		// 	}
-
-		// 	if value == "go.uber.org/multierr" {
-		// 		if n.Name != nil {
-		// 			//importName = n.Name.Name
-		// 		}
-		// 		pass.Reportf(n.Pos(), "multierr is imported")
-		// 	}
 		case *ast.CallExpr:
 			value, ok := n.Fun.(*ast.SelectorExpr)
 			if !ok {
 				return
 			}
-			x, ok := value.X.(*ast.Ident)
-			if !ok {
-				return
-			}
-			if x.Name == "multierr" && value.Sel.Name == "Errors" {
+			if obj == types.ObjectOf(value.Sel) {
 				pass.Reportf(n.Pos(), "CallExpr is here")
-			}	
-		} 
+			}
+		}
 	})
 
 	return nil, rerr
