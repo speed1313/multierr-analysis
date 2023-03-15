@@ -29,12 +29,17 @@ func run(pass *analysis.Pass) (any, error) {
 
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		switch n := n.(type) {
+		case *ast.ImportSpec:
+			if n.Path.Value == `"go.uber.org/multierr"` {
+				pass.Reportf(n.Pos(), "multierr is imported")
+			}
 		case *ast.Ident:
-			if n.Name == "gopher" {
-				pass.Reportf(n.Pos(), "identifier is gopher")
+			if n.Name == "Errors" {
+				pass.Reportf(n.Pos(), "Errors is here")
 			}
 		case *ast.CallExpr:
-			pass.Reportf(n.Pos(), "call expression")
+			// TODO: check 
+			pass.Reportf(n.Pos(), "CallExpr is here")
 		}
 	})
 
