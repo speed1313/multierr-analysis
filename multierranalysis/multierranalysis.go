@@ -33,6 +33,8 @@ func run(pass *analysis.Pass) (any, error) {
 			if n.Name == "gopher" {
 				pass.Reportf(n.Pos(), "identifier is gopher")
 			}
+		case *ast.CallExpr:
+			pass.Reportf(n.Pos(), "call expression")
 		}
 	})
 
