@@ -16,7 +16,7 @@ func multierr_use() {
 	err = multierr.Append(err, nil) // successful request
 	err = multierr.Append(err, errors.New("call 5 failed"))
 
-	errors := multierr.Errors(err) // want "Errors is here"
+	errors := multierr.Errors(err) // want "CallExpr is here"
 	for _, err := range errors {
 		fmt.Println(err)
 	}

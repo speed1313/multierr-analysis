@@ -2,7 +2,7 @@ package multierranalysis
 
 import (
 	"go/ast"
-	"strconv"
+	//"strconv"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -31,27 +31,32 @@ func run(pass *analysis.Pass) (any, error) {
 			return
 		}
 		switch n := n.(type) {
-		case *ast.ImportSpec:
-			value, err := strconv.Unquote(n.Path.Value)
-			if err != nil {
-				rerr = err
+		// case *ast.ImportSpec:
+		// 	value, err := strconv.Unquote(n.Path.Value)
+		// 	if err != nil {
+		// 		rerr = err
+		// 		return
+		// 	}
+
+		// 	if value == "go.uber.org/multierr" {
+		// 		if n.Name != nil {
+		// 			//importName = n.Name.Name
+		// 		}
+		// 		pass.Reportf(n.Pos(), "multierr is imported")
+		// 	}
+		case *ast.CallExpr:
+			value, ok := n.Fun.(*ast.SelectorExpr)
+			if !ok {
 				return
 			}
-
-			if value == "go.uber.org/multierr" {
-				if n.Name != nil {
-					//importName = n.Name.Name
-				}
-				pass.Reportf(n.Pos(), "multierr is imported")
+			x, ok := value.X.(*ast.Ident)
+			if !ok {
+				return
 			}
-		case *ast.Ident:
-			if n.Name == "Errors" {
-				pass.Reportf(n.Pos(), "Errors is here")
-			}
-		case *ast.CallExpr:
-			// TODO: check
-			pass.Reportf(n.Pos(), "CallExpr is here")
-		}
+			if x.Name == "multierr" && value.Sel.Name == "Errors" {
+				pass.Reportf(n.Pos(), "CallExpr is here")
+			}	
+		} 
 	})
 
 	return nil, rerr
